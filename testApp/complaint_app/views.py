@@ -9,17 +9,15 @@ from rest_framework import status
 class ComplaintViewSet(viewsets.ModelViewSet):
   http_method_names = ['get']
   serializer_class = ComplaintSerializer
-  def retrieve(self, request,pk):
-  #filter out the username inside of the User Object, it will always return back an array, so use first()
-   user = UserProfile.objects.all().filter(full_name__contains=pk).first()
-   print(user)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
-   #get the district 
-   distric = 'NYCC' + user.district
-   # Get all complaints from the user's district
-   complaints = Complaint.objects.all().filter(account = distric)
-   serializer = ComplaintSerializer(complaints, many=True)
-
-   return Response(serializer.data)
+  def retrieve(self, request, pk):
+    user = User.objects.all().filter(username=pk).first()
+    profile = UserProfile.objects.all().filter(id=user.id).first()
+    print(UserProfileSerializer(profile).data)
+    district = 'NYCC' + profile.district
+    # Get all complaints from the user's district
+    queryset = Complaint.objects.all().filter(account=district)
+    serializer = ComplaintSerializer(queryset, many=True)
+    return Response(serializer.data)
 
 class OpenCasesViewSet(viewsets.ModelViewSet):
   http_method_names = ['get']
@@ -72,4 +70,4 @@ class TopComplaintTypeViewSet(viewsets.ModelViewSet):
       # find the top 3 complaint Types
     top3ComplaintType = dict(sorted(complaintsTypes.items(), key=lambda d:d[1], reverse=True)[0:3])
       
-    return Response(top3ComplaintType.keys())
+    return Response(top3ComplaintType)

@@ -22,8 +22,8 @@ const columns = [
 const getComplaints = async (token, username) => {
   return await fetch(`http://localhost:8000/api/complaints/${username}`, {
     headers: {
-      Authorization: `Token ${token}`,
-      Accept: 'application/json',
+      'Authorization': `Token ${token}`,
+      'Accept': 'application/json',
       'Content-Type': 'application/json',
     },
   })
@@ -39,7 +39,7 @@ const getToken = async (user) => {
 
   const body = user === 'sunnyz' ? superUser : user;
 
-  const token = await fetch('http://localhost:8000/login', {
+  const token = await fetch('http://localhost:8000/login/', {
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
@@ -55,17 +55,29 @@ const getToken = async (user) => {
       return res.token;
     });
 
-  return token;
+    console.log('returning this', token)
+  if(token) return token;
 };
 
 const Login = styled.div`
   width: max-content;
   display: flex;
   margin: 5rem auto;
+  flex-direction: column;
+  padding:2rem;
+  background-color:#fff;
+  align-items: center;
+  color: #2F56A6;
+  border-radius:10px;
+  box-shadow: 2px 11px 26px rgb(17 17 17 / 80%);
 
   label {
-    margin-left: 2rem;
-    padding-right: 1rem;
+    font-weight: 500;
+  }
+
+  input{
+    margin:1rem;
+    line-height:1.5rem;
   }
 `;
 
@@ -105,7 +117,7 @@ export const Main = () => {
       setToken(nt);
     } else {
       if (username && password) {
-        const nt = getToken({ username, password });
+        const nt = await getToken({ username, password });
         setToken(nt);
       }
     }
@@ -143,7 +155,7 @@ export const Main = () => {
 
   return (
     <div>
-      Information Dashboard
+      <h1>Information Dashboard</h1>
       {!token && (
         <Login>
           <label>Login Name</label>
@@ -153,7 +165,7 @@ export const Main = () => {
             type="password"
             onChange={(e) => setPassword(e.target.value)}
           />
-          <button onClick={() => loginClick()}>Login</button>
+          <button onClick={() => loginClick()} className="loginBtn">Login</button>
         </Login>
       )}
       {token && <div>{renderTable()}</div>}
