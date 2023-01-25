@@ -6,28 +6,41 @@ from django.contrib.auth.models import User
 from rest_framework import status 
 # Create your views here.
 
+# make user district as a global variable as this is the condition for all requests
+def getUserDistrict(username):
+  user = User.objects.all().filter(username=username).first()
+  profile = UserProfile.objects.all().filter(id=user.id).first()
+  print(profile)
+  district = 'NYCC' + profile.district
+  return district
+
 class ComplaintViewSet(viewsets.ModelViewSet):
   http_method_names = ['get']
   serializer_class = ComplaintSerializer
   def retrieve(self, request, pk):
-    user = User.objects.all().filter(username=pk).first()
-    profile = UserProfile.objects.all().filter(id=user.id).first()
-    print(UserProfileSerializer(profile).data)
-    district = 'NYCC' + profile.district
+    district = getUserDistrict(pk)
     # Get all complaints from the user's district
     queryset = Complaint.objects.all().filter(account=district)
+    serializer = ComplaintSerializer(queryset, many=True)
+    return Response(serializer.data)
+
+class LocalComplaintViewSet(viewsets.ModelViewSet):
+  http_method_names = ['get']
+  serializer_class = ComplaintSerializer
+  def retrieve(self, request, pk):
+    district = getUserDistrict(pk)
+    # Get all complaints from the user's district
+    queryset = Complaint.objects.all().filter(account=district, council_dist=district)
     serializer = ComplaintSerializer(queryset, many=True)
     return Response(serializer.data)
 
 class OpenCasesViewSet(viewsets.ModelViewSet):
   http_method_names = ['get']
   def retrieve(self, request,pk):
-    user = UserProfile.objects.all().filter(full_name__contains=pk).first()
-    district = 'NYCC' + user.district
+    district = getUserDistrict(pk)
   # Get only the open complaints from the user's district
   #closedata_isnull = case still open, case still open = false = case is closed. exclude closed cases to get the open cases. 
-    complaints = Complaint.objects.all().filter(account=district).exclude(closedata_isnull=False)
-    #queryset = Complaint.objects.all().filter(account=district).filter(closedata_isnull=true)
+    complaints = Complaint.objects.all().filter(account=district).exclude(closedate__isnull=False)
 
     print('inside open cases' + district)
 
@@ -38,10 +51,9 @@ class OpenCasesViewSet(viewsets.ModelViewSet):
 class ClosedCasesViewSet(viewsets.ModelViewSet):
   http_method_names = ['get'] 
   def retrieve(self, request, pk):
-    user = UserProfile.objects.all().filter(full_name__contains=pk).first()
-    district = 'NYCC' + user.district
+    district = getUserDistrict(pk)
     # Get only complaints that are close from the user's district
-    complaints = Complaint.objects.all().filter(account=district).exclude(closedata_isnull=True)
+    complaints = Complaint.objects.all().filter(account=district).exclude(closedate__isnull=True)
 
     print('closed cases' + district)
 
@@ -52,8 +64,7 @@ class ClosedCasesViewSet(viewsets.ModelViewSet):
 class TopComplaintTypeViewSet(viewsets.ModelViewSet):
   http_method_names = ['get']
   def retrieve(self, request, pk):
-    user = UserProfile.objects.all().filter(full_name__contains=pk).first()
-    district = 'NYCC' + user.district
+    district = getUserDistrict(pk)
     complaints = Complaint.objects.all().filter(account = district)
     n = len(complaints)
      # Get the top 3 complaint types from the user's district
